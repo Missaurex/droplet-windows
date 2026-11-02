@@ -1,0 +1,7 @@
+faster-whisper==1.2.1
+soundcard
+numpy
+pystray
+pillow
+uiautomation
+psutil

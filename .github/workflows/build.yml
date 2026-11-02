@@ -1,0 +1,34 @@
+# Собирает DropletCalls.exe на Windows-машине GitHub и выкладывает DropletCalls-Windows.zip в релиз (на тег v*).
+name: build
+on:
+  push: { tags: ['v*'] }
+  workflow_dispatch: {}
+permissions: { contents: write }
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - run: pip install -r requirements.txt pyinstaller
+      - run: python test_core.py
+      - name: Windows-части запускаются (реестр микрофона, автозапуск)
+        run: python -c "import droplet_calls as d; print('mic', d.mic_users()); print('autostart', d.autostart())"
+      - run: pyinstaller --noconfirm --windowed --name DropletCalls --add-data "extension;extension" --collect-all faster_whisper --collect-all ctranslate2 --collect-all soundcard --collect-all uiautomation droplet_calls.py
+      - name: exe стартует и не падает 15 секунд
+        shell: pwsh
+        run: |
+          Start-Process dist/DropletCalls/DropletCalls.exe
+          Start-Sleep 15
+          if (-not (Get-Process DropletCalls -ErrorAction SilentlyContinue)) { Get-Content "$env:LOCALAPPDATA/DropletCalls/log.txt" -ErrorAction SilentlyContinue; exit 1 }
+          Stop-Process -Name DropletCalls
+      - shell: pwsh
+        run: |
+          Copy-Item "Установка Windows.txt" dist/DropletCalls/
+          Compress-Archive -Path dist/DropletCalls -DestinationPath DropletCalls-Windows.zip
+      - uses: actions/upload-artifact@v4
+        with: { name: DropletCalls-Windows, path: DropletCalls-Windows.zip }
+      - if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with: { files: DropletCalls-Windows.zip }

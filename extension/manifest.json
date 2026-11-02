@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "Droplet Звонки для amoCRM",
+  "version": "1.0",
+  "description": "Открывает карточку клиента во время звонка и вписывает итог в примечание — от твоего имени, без ключей.",
+  "host_permissions": ["http://127.0.0.1:47811/*"],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [{
+    "matches": ["https://*.amocrm.ru/*", "https://*.amocrm.com/*", "https://*.kommo.com/*"],
+    "js": ["content.js"]
+  }]
+}
