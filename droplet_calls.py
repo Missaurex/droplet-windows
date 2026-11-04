@@ -291,6 +291,10 @@ def clip(text):
 def finish(audio, st):
     with finish_lock:  # два звонка подряд — по очереди
         me, them, started = audio
+        length = (datetime.now() - started).total_seconds()
+        if length < 12:  # фейковые звонки amoCRM/Sipuni на 5–9 секунд — не храним
+            log(f"короткий звонок {length:.0f} с — не сохраняю")
+            return
         minutes = max(1, round(max(len(me), len(them)) / 16000 / 60))
         folder = CALLS / (started.strftime("%Y-%m-%d %H-%M") + (" " + st["phone"] if st.get("phone") else ""))
         folder.mkdir(parents=True, exist_ok=True)
